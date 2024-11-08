@@ -1,40 +1,38 @@
 package asia.fourtitude.interviewq.jumble.core;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.util.*;
+
+
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public /* record */ class GameState {
 
-    private final String original;
+    private String id;
+
+    private String original;
 
     private String scramble;
 
-    private final Map<String, Boolean> subWords;
+    private String scrambleAsDisplay;
+
+    private String word;
+
+    private Map<String, Boolean> subWords;
+
+    private String createdBy;
+    private String lastModifiedBy;
 
     public GameState(String original, String scramble, Map<String, Boolean> subWords) {
         this.original = original;
         this.scramble = scramble;
         this.subWords = subWords;
-    }
-
-    public String getOriginal() {
-        return original;
-    }
-
-    public String getScramble() {
-        return scramble;
-    }
-
-    public void setScramble(String scramble) {
-        this.scramble = scramble;
-    }
-
-    public Map<String, Boolean> getSubWords() {
-        return subWords;
     }
 
     public String getScrambleAsDisplay() {
@@ -51,19 +49,13 @@ public /* record */ class GameState {
             if (entry.getValue() == Boolean.TRUE) {
                 String word = entry.getKey();
                 Integer len = word.length();
-                Set<String> words = guesseds.get(len);
-                if (words == null) {
-                    words = new TreeSet<>();
-                    guesseds.put(len, words);
-                }
+                Set<String> words = guesseds.computeIfAbsent(len, k -> new TreeSet<>());
                 words.add(word);
             }
         }
         List<String> words = new ArrayList<>();
         for (Map.Entry<Integer, Set<String>> entry : guesseds.entrySet()) {
-            for (String word : entry.getValue()) {
-                words.add(word);
-            }
+            words.addAll(entry.getValue());
         }
         return words;
     }
@@ -77,21 +69,6 @@ public /* record */ class GameState {
             return true;
         }
         return false;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (original != null) {
-            sb.append(sb.length() == 0 ? "" : ", ").append("original=[").append(original).append(']');
-        }
-        if (scramble != null) {
-            sb.append(sb.length() == 0 ? "" : ", ").append("scramble=[").append(scramble).append(']');
-        }
-        if (subWords != null) {
-            sb.append(sb.length() == 0 ? "" : ", ").append("subWords.size=[").append(subWords.size()).append(']');
-        }
-        return sb.toString();
     }
 
 }

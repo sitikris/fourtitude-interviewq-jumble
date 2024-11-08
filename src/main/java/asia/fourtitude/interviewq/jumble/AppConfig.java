@@ -1,9 +1,8 @@
 package asia.fourtitude.interviewq.jumble;
 
+import asia.fourtitude.interviewq.jumble.core.JumbleEngine;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import asia.fourtitude.interviewq.jumble.core.JumbleEngine;
 
 @Configuration
 public class AppConfig {

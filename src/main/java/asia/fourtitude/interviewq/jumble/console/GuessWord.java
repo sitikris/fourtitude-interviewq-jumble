@@ -1,11 +1,11 @@
 package asia.fourtitude.interviewq.jumble.console;
 
+import asia.fourtitude.interviewq.jumble.core.GameState;
+import asia.fourtitude.interviewq.jumble.core.JumbleEngine;
+
 import java.io.PrintStream;
 import java.util.List;
 import java.util.Scanner;
-
-import asia.fourtitude.interviewq.jumble.core.GameState;
-import asia.fourtitude.interviewq.jumble.core.JumbleEngine;
 
 public class GuessWord extends AConsole {
 

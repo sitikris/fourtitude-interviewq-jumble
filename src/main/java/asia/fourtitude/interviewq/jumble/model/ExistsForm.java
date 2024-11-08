@@ -1,37 +1,21 @@
 package asia.fourtitude.interviewq.jumble.model;
 
+import lombok.Getter;
+import lombok.Setter;
+
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+
+@Getter
+@Setter
 public class ExistsForm {
 
+    @NotNull
+    @NotEmpty(message = "Word must not be blank")
+    @Size(min = 3, max = 30, message = "size must be between 3 and 30")
     private String word;
 
     private Boolean exists;
-
-    public String getWord() {
-        return word;
-    }
-
-    public void setWord(String word) {
-        this.word = word;
-    }
-
-    public Boolean getExists() {
-        return exists;
-    }
-
-    public void setExists(Boolean exists) {
-        this.exists = exists;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (word != null) {
-            sb.append(sb.length() == 0 ? "" : ", ").append("word=[").append(word).append(']');
-        }
-        if (exists != null) {
-            sb.append(sb.length() == 0 ? "" : ", ").append("exists=[").append(exists).append(']');
-        }
-        return sb.toString();
-    }
 
 }

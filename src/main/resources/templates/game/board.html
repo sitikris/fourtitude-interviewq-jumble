@@ -42,6 +42,10 @@
                         <div class="col-sm-6">
                             <input type="text" th:field="*{word}" class="form-control" th:errorclass="is-invalid" id="iptWord" aria-describedby="iptWordFeedback"/>
                         </div>
+
+                        <span th:if="${board.state.subWords.containsKey(board.word)}" >Guessed correctly</span>
+                        <span th:if="${!board.state.subWords.containsKey(board.word)}" >Guessed incorrectly</span>
+
                         <label th:if="${#fields.hasErrors('word')}" th:errors="*{word}" id="iptWordFeedback" class="col-sm-4 text-danger is-invalid">Word Error</label>
                     </div>
                     <div class="row mb-3">

@@ -1,10 +1,10 @@
 package asia.fourtitude.interviewq.jumble.console;
 
+import asia.fourtitude.interviewq.jumble.core.JumbleEngine;
+
 import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Scanner;
-
-import asia.fourtitude.interviewq.jumble.core.JumbleEngine;
 
 public class ConsoleApp extends AConsole {
 

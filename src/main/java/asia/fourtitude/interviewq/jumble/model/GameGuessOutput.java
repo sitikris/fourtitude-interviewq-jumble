@@ -1,18 +1,20 @@
 package asia.fourtitude.interviewq.jumble.model;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.validation.constraints.Size;
-
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
+import lombok.*;
 
-@JsonInclude(Include.NON_NULL)
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import java.util.List;
+
+@Getter
+@Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+// @JsonInclude(Include.NON_NULL)
 public class GameGuessOutput {
 
     @Schema(
@@ -22,6 +24,7 @@ public class GameGuessOutput {
             requiredMode = RequiredMode.AUTO)
     private String result;
 
+    @NotNull
     @Schema(
             title = "ID",
             description = "Unique identifier of the game state.",
@@ -29,6 +32,7 @@ public class GameGuessOutput {
             requiredMode = RequiredMode.AUTO)
     private String id;
 
+    @NotNull
     @Schema(
             description = "Original word in game.",
             example = "tomato",
@@ -39,6 +43,7 @@ public class GameGuessOutput {
     @Size(min = 3, max = 30)
     private String originalWord;
 
+    @NotNull
     @Schema(
             description = "Scramble letters of the word in game.",
             example = "amotto",
@@ -81,98 +86,5 @@ public class GameGuessOutput {
             requiredMode = RequiredMode.AUTO)
     @JsonProperty(value = "guessed_words")
     private List<String> guessedWords;
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getResult() {
-        return result;
-    }
-
-    public void setResult(String result) {
-        this.result = result;
-    }
-
-    public String getOriginalWord() {
-        return originalWord;
-    }
-
-    public void setOriginalWord(String originalWord) {
-        this.originalWord = originalWord;
-    }
-
-    public String getScrambleWord() {
-        return scrambleWord;
-    }
-
-    public void setScrambleWord(String scrambleWord) {
-        this.scrambleWord = scrambleWord;
-    }
-
-    public String getGuessWord() {
-        return guessWord;
-    }
-
-    public void setGuessWord(String guessWord) {
-        this.guessWord = guessWord;
-    }
-
-    public int getTotalWords() {
-        return totalWords;
-    }
-
-    public void setTotalWords(int totalWords) {
-        this.totalWords = totalWords;
-    }
-
-    public int getRemainingWords() {
-        return remainingWords;
-    }
-
-    public void setRemainingWords(int remainingWords) {
-        this.remainingWords = remainingWords;
-    }
-
-    public List<String> getGuessedWords() {
-        if (guessedWords == null) {
-            guessedWords = new ArrayList<>();
-        }
-        return guessedWords;
-    }
-
-    public void setGuessedWords(List<String> guessedWords) {
-        this.guessedWords = guessedWords;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (id != null) {
-            sb.append(sb.length() == 0 ? "" : ", ").append("id=[").append(id).append(']');
-        }
-        if (result != null) {
-            sb.append(sb.length() == 0 ? "" : ", ").append("result=[").append(result).append(']');
-        }
-        if (originalWord != null) {
-            sb.append(sb.length() == 0 ? "" : ", ").append("originalWord=[").append(originalWord).append(']');
-        }
-        if (scrambleWord != null) {
-            sb.append(sb.length() == 0 ? "" : ", ").append("scrambleWord=[").append(scrambleWord).append(']');
-        }
-        if (guessWord != null) {
-            sb.append(sb.length() == 0 ? "" : ", ").append("guessWord=[").append(guessWord).append(']');
-        }
-        sb.append(sb.length() == 0 ? "" : ", ").append("totalWords=[").append(totalWords).append(']');
-        sb.append(sb.length() == 0 ? "" : ", ").append("remainingWords=[").append(remainingWords).append(']');
-        if (guessedWords != null) {
-            sb.append(sb.length() == 0 ? "" : ", ").append("guessedWords.size=[").append(guessedWords.size()).append(']');
-        }
-        return sb.toString();
-    }
 
 }

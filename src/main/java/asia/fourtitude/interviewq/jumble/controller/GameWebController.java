@@ -1,22 +1,22 @@
 package asia.fourtitude.interviewq.jumble.controller;
 
+import asia.fourtitude.interviewq.jumble.core.GameState;
+import asia.fourtitude.interviewq.jumble.core.JumbleEngine;
+import asia.fourtitude.interviewq.jumble.model.GameBoard;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.SessionAttributes;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.support.SessionStatus;
 
-import asia.fourtitude.interviewq.jumble.core.GameState;
-import asia.fourtitude.interviewq.jumble.core.JumbleEngine;
-import asia.fourtitude.interviewq.jumble.model.GameBoard;
+import javax.validation.Valid;
+import java.util.List;
 
+@Slf4j
 @Controller
 @RequestMapping(path = "/game")
 @SessionAttributes("board")
@@ -64,7 +64,9 @@ public class GameWebController {
     }
 
     @GetMapping("/new")
-    public String doGetNew(@ModelAttribute(name = "board") GameBoard board) {
+    public String doGetNew(
+            @Valid @ModelAttribute(name = "board") GameBoard board,
+            BindingResult bindingResult, Model model) {
         GameState state = this.jumbleEngine.createGameState(6, 3);
 
         /*
@@ -74,6 +76,12 @@ public class GameWebController {
          * b) Presentation page to show the information of game board/state
          * c) Must pass the corresponding unit tests
          */
+
+        board.setState(state);
+        if (board.getWord() == null) {
+            board.setWord("");
+        }
+        model.addAttribute("board", board);
 
         return "game/board";
     }
@@ -87,7 +95,7 @@ public class GameWebController {
 
     @PostMapping("/play")
     public String doPostPlay(
-            @ModelAttribute(name = "board") GameBoard board,
+            @Valid @ModelAttribute(name = "board") GameBoard board,
             BindingResult bindingResult, Model model) {
         if (board == null || board.getState() == null) {
             // session expired
@@ -105,6 +113,38 @@ public class GameWebController {
          * e) Presentation page to show the information of game board/state
          * f) Must pass the corresponding unit tests
          */
+        List<String> guessedWords = board.getState().getGuessedWords();
+        log.debug("Sub words : {}", board.getState().getSubWords());
+
+        int remaining = board.getState().getSubWords().size() - guessedWords.size();
+        log.debug("Total possible : {}", board.getState().getSubWords().size());
+        if (guessedWords.isEmpty()) {
+            log.debug("No word guessed yet.");
+        } else {
+            log.debug("Words guessed  : {}", guessedWords.size());
+            int pos = 0;
+            for (String word : guessedWords) {
+                pos += 1;
+                log.debug("{}. {}", pos, word);
+            }
+        }
+        if (remaining > 0) {
+            String scramble = jumbleEngine.scramble(board.getState().getOriginal());
+            board.getState().setScramble(scramble);
+
+            log.debug("Remaining words: {}", remaining);
+            log.debug("Original       : {}", board.getState().getOriginal());
+            log.debug("Letters        : {}", board.getState().getScrambleAsDisplay());
+
+            String word = board.getWord().trim();
+            if (board.getState().updateGuessWord(word)) {
+                log.debug("[{}] guessed correctly", word);
+            } else {
+                log.debug("[{}] guessed incorrectly", word);
+            }
+        }
+
+        model.addAttribute("board", board);
 
         return "game/board";
     }

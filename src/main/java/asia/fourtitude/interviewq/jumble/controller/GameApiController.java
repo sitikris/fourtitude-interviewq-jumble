@@ -1,25 +1,15 @@
 package asia.fourtitude.interviewq.jumble.controller;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import asia.fourtitude.interviewq.jumble.core.GameState;
 import asia.fourtitude.interviewq.jumble.core.JumbleEngine;
+import asia.fourtitude.interviewq.jumble.model.GameBoard;
 import asia.fourtitude.interviewq.jumble.model.GameGuessInput;
-import asia.fourtitude.interviewq.jumble.model.GameGuessModel;
 import asia.fourtitude.interviewq.jumble.model.GameGuessOutput;
+import asia.fourtitude.interviewq.jumble.service.GameBoardService;
+import asia.fourtitude.interviewq.jumble.service.GameStateService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -28,26 +18,31 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+@Slf4j
 @RestController
 @Tag(name = "Game API", description = "Guessing words game REST API endpoint.")
 @RequestMapping(path = "/api/game")
+@RequiredArgsConstructor
 public class GameApiController {
 
-    private static final Logger LOG = LoggerFactory.getLogger(GameApiController.class);
+    private final GameStateService gameStateService;
+
+    private final GameBoardService gameBoardService;
 
     private final JumbleEngine jumbleEngine;
 
-    /*
-     * In-memory database/repository for all the game boards/states.
-     */
-    private final Map<String, GameGuessModel> gameBoards;
-
-    @Autowired(required = true)
-    public GameApiController(JumbleEngine jumbleEngine) {
-        this.jumbleEngine = jumbleEngine;
-        this.gameBoards = new ConcurrentHashMap<>();
-    }
+    private final ObjectWriter objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();
 
     @Operation(
             summary = "Creates new game board/state",
@@ -72,7 +67,7 @@ public class GameApiController {
                                                             "  \"total_words\": 29,\n" +
                                                             "  \"remaining_words\": 29,\n" +
                                                             "  \"guessed_words\": []\n" +
-                                                            "}") })) })
+                                                            "}")}))})
     @GetMapping(value = "/new", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<GameGuessOutput> newGame() {
         /*
@@ -88,6 +83,17 @@ public class GameApiController {
          * a) Store the game state to the repository, with unique game board ID
          * b) Return the game board/state (GameGuessOutput) to caller
          */
+
+        GameState savedGameState = gameStateService.saveGameState(gameState);
+
+        output.setId(savedGameState.getId());
+        output.setResult("Created new game.");
+        output.setOriginalWord(gameState.getOriginal());
+        output.setScrambleWord(gameStateService.getScrambleAsDisplay(gameState.getScramble()));
+        output.setGuessedWords(new ArrayList<>());
+        output.setTotalWords(gameState.getSubWords().size());
+        int remaining = gameState.getSubWords().size() - gameState.getGuessedWords().size();
+        output.setRemainingWords(remaining);
 
         return new ResponseEntity<>(output, HttpStatus.OK);
     }
@@ -176,7 +182,7 @@ public class GameApiController {
                                                             "    \"loom\",\n" +
                                                             "    \"gloom\"\n" +
                                                             "  ]\n" +
-                                                            "}") })),
+                                                            "}")})),
                     @ApiResponse(
                             responseCode = "404",
                             description = "Not Found",
@@ -195,7 +201,7 @@ public class GameApiController {
                                                     description = "The `ID` is correct format, but game board/state is not found in system.",
                                                     value = "{\n" +
                                                             "  \"result\": \"Game board/state not found.\"\n" +
-                                                            "}") })) })
+                                                            "}")}))})
     @PostMapping(value = "/guess", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<GameGuessOutput> playGame(
             @Parameter(
@@ -221,6 +227,52 @@ public class GameApiController {
          * d) Update the game board (and game state) in repository
          * e) Return the updated game board/state (GameGuessOutput) to caller
          */
+
+        try {
+
+            if (Objects.isNull(input.getId()) && Objects.isNull(input.getWord())) {
+                output.setResult("Invalid Game ID.");
+                return new ResponseEntity<>(output, HttpStatus.NOT_FOUND);
+            }
+
+            GameState gameState = gameStateService.getGameStateById(input.getId());
+            if (gameState == null) {
+                output.setResult("Game board/state not found.");
+                return new ResponseEntity<>(output, HttpStatus.NOT_FOUND);
+            }
+
+            if (gameState.getSubWords().containsKey(input.getWord())) {
+                GameBoard gameBoard = new GameBoard();
+                gameBoard.setStateId(gameState.getId());
+                gameBoard.setWord(input.getWord());
+                gameBoardService.saveGameBoard(gameBoard);
+
+                gameState.setWord(input.getWord());
+                gameStateService.updateGameState(gameState.getId(), gameState);
+
+                output.setResult("Guessed correctly.");
+
+            } else {
+                output.setResult("Guessed incorrectly.");
+            }
+
+            List<String> guessedWords = gameStateService.getGuessedWords(gameState.getId());
+            int remaining = gameState.getSubWords().size() - guessedWords.size();
+
+            output.setId(gameState.getId());
+            output.setOriginalWord(gameState.getOriginal());
+            output.setScrambleWord(gameStateService.getScrambleAsDisplay(gameState.getScramble()));
+            output.setRemainingWords(remaining);
+            output.setGuessedWords(guessedWords);
+            output.setGuessWord(input.getWord());
+            output.setResult(remaining == 0 ? "All words guessed." : output.getResult());
+            output.setTotalWords(gameState.getSubWords().size());
+
+            log.debug("GameGuessOutput : \n{}", objectWriter.writeValueAsString(output));
+
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
 
         return new ResponseEntity<>(output, HttpStatus.OK);
     }
